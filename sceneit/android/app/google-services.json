@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "695449776464",
+    "project_id": "sceneit-39c58",
+    "storage_bucket": "sceneit-39c58.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:695449776464:android:90fa5aba6f30088d4d7c55",
+        "android_client_info": {
+          "package_name": "com.example.sceneit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8TerhvXKb6laS-HxYfg3w9hQN6DLmLck"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

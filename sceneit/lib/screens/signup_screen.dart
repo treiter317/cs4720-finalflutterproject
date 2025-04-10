@@ -3,27 +3,29 @@ import '../widgets/logo_widget.dart';
 import '../widgets/textfield_widget.dart';
 import '../widgets/button_widget.dart';
 import '../constants/colors.dart';
-import 'signup_screen.dart';
+import 'login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class LoginScreen extends StatefulWidget {
+class SignUpScreen extends StatefulWidget {
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  _SignUpScreenState createState() => _SignUpScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   bool isLoading = false;
 
-  void _login() async {
-    final username = usernameController.text.trim();
+  void _signUp() async {
+    final email = emailController.text.trim();
     final password = passwordController.text.trim();
+    final username = usernameController.text.trim();
 
-    if (username.isEmpty || password.isEmpty) {
+    if (email.isEmpty || password.isEmpty || username.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please fill in both fields.')),
+        SnackBar(content: Text('Please fill in all fields.')),
       );
       return;
     }
@@ -33,37 +35,31 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('username', isEqualTo: username)
-          .get();
-
-      if (querySnapshot.docs.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Username not found.')),
-        );
-        return;
-      }
-
-      final email = querySnapshot.docs.first.data()['email'];
-
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+      String uid = userCredential.user!.uid;
 
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'username': username,
+        'email': email,
+        'created_at': Timestamp.now(),
+      });
+
+      print('User signed up: ${userCredential.user?.uid}');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login successful!')),
+        SnackBar(content: Text('Sign up successful!')),
       );
 
-      // TODO: Navigate to HomePage after login
+      // TODO: Navigate to HomePage after signup
 
     } on FirebaseAuthException catch (e) {
-      String message = 'Login failed.';
-      if (e.code == 'user-not-found') {
-        message = 'No user found with this email.';
-      } else if (e.code == 'wrong-password') {
-        message = 'Incorrect password.';
+      String message = 'An error occurred';
+      if (e.code == 'email-already-in-use') {
+        message = 'This email is already registered.';
+      } else if (e.code == 'weak-password') {
+        message = 'Password should be at least 6 characters.';
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
@@ -103,44 +99,43 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Expanded(
                       child: GestureDetector(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color:  Colors.white ,
-                            borderRadius: BorderRadius.circular(10),
-                            border:
-                                Border.all(color: Colors.grey[300]!, width: 4)
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            'Log In',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color:  Colors.black,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ), Expanded(
-                      child: GestureDetector(
                         onTap: () {
-                          Navigator.push(
+                          Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (context) => SignUpScreen()),
+                            MaterialPageRoute(builder: (context) => LoginScreen()),
                           );
                         },
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.grey[300],
+                            color:  Colors.grey[300],
                             borderRadius: BorderRadius.circular(10),
-                            border:
-                                null,
+                            border: Border.all(color: Colors.grey[300]!, width: 4)
                           ),
                           alignment: Alignment.center,
-                          child: Text(
-                            'Sign Up',
+                          child: const Text(
+                            'Log In',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.grey[300]!, width: 4)
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'Sign Up',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
                             ),
                           ),
                         ),
@@ -163,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text(
-                      'Login',
+                      'Sign Up',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 24,
@@ -177,29 +172,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 20),
                     TextFieldWidget(
+                      controller: emailController,
+                      hintText: 'Email',
+                    ),
+                    const SizedBox(height: 20),
+                    TextFieldWidget(
                       controller: passwordController,
                       hintText: 'Password',
                       isPassword: true,
                     ),
-                    const SizedBox(height: 15),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {
-                        },
-                        child: const Text(
-                          'Forgot Password ?',
-                          style: TextStyle(
-                            color: AppColors.blueLink,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 30),
                     ButtonWidget(
-                      text: 'Login',
+                      text: 'Create Account',
+                      onPressed: isLoading ? null : _signUp,
                       isLoading: isLoading,
-                      onPressed: isLoading ? null : _login,
                     ),
                   ],
                 ),
@@ -211,3 +197,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
