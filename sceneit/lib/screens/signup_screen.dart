@@ -60,6 +60,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         message = 'This email is already registered.';
       } else if (e.code == 'weak-password') {
         message = 'Password should be at least 6 characters.';
+      } else if(e.code == 'invalid-email'){
+        message = 'Email should be in ****@provider.*** format.';
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
