@@ -80,6 +80,50 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _showPasswordResetDialog() {
+    final TextEditingController emailController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('Reset Password'),
+          content: TextFieldWidget(
+            controller: emailController,
+            hintText: 'Enter your email',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final email = emailController.text.trim();
+                if (email.isNotEmpty) {
+                  try {
+                    await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('If this account exists, the password reset email was sent!')),
+                    );
+                    Navigator.of(context).pop();
+                  } on FirebaseAuthException catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.message ?? 'Error sending email')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Send'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -185,8 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {
-                        },
+                        onPressed: _showPasswordResetDialog,
                         child: const Text(
                           'Forgot Password ?',
                           style: TextStyle(
