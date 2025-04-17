@@ -143,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(builder: (context) => UserProfileScreen()),
           );
         },
-        child: Icon(Icons.person, color: AppColors.lightBlue),
+        child: Icon(Icons.person, color: Colors.white),
         tooltip: 'Profile',
       ),
     );
