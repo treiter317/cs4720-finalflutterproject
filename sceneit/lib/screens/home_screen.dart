@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:sceneit/data/Show.dart';
 import 'package:sceneit/data/tmdb_reader.dart';
-
+import 'user_screen.dart';
 import '../constants/colors.dart';
 
 class HomeScreen extends StatefulWidget {
-    const HomeScreen({super.key});
+  const HomeScreen({super.key});
 
-    @override
-    State<HomeScreen> createState() => _HomeScreenState();
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
@@ -19,7 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool searchOpen = false;
   final TextEditingController searchController = TextEditingController();
 
-  void onSearchInput (String input) {
+  void onSearchInput(String input) {
     if (input.isNotEmpty) {
       setState(() {
         searchOpen = true;
@@ -42,69 +42,110 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Image.asset(
-            'assets/SceneItLogo.png',
-          ),
-          backgroundColor: AppColors.lightBlue,
-          centerTitle: true,
-        ),
-        backgroundColor: AppColors.lightBlue, // or AppColors.lightBlue if you prefer
-        body: Padding(
+      appBar: AppBar(
+        title: Image.asset('assets/SceneItLogo.png'),
+        backgroundColor: AppColors.lightBlue,
+        centerTitle: true,
+      ),
+      backgroundColor: AppColors.lightBlue,
+      body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Discover", style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold)),
-          showSearchBar(),
-          Expanded(
-            child: searchOpen ?
-              FutureBuilder<List<Show>>(
-                future: searchResults,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  }
-                  final searchedShows = snapshot.data!;
-                  return searchResultList(searchedShows);
-                }
-              ) : ListView(
-                children: [
-                  Text("Trending Now", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  FutureBuilder<List<Show>>(
-                    future: popularShows,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
-                      }
-                      final popShows = snapshot.data!;
-                      return showCardList(popShows);
-                    }),
-                  Text("Top Rated", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  FutureBuilder<List<Show>>(
-                    future: topRatedShows,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
-                      }
-                      final topShows = snapshot.data!;
-                      return showCardList(topShows);
-                    }),
-                ],
-              )
-          )
-        ],
-      )
-      )
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Discover",
+              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+            ),
+            showSearchBar(),
+            Expanded(
+              child:
+                  searchOpen
+                      ? FutureBuilder<List<Show>>(
+                        future: searchResults,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Center(child: CircularProgressIndicator());
+                          }
+                          if (snapshot.hasError) {
+                            return Center(
+                              child: Text('Error: ${snapshot.error}'),
+                            );
+                          }
+                          final searchedShows = snapshot.data!;
+                          return searchResultList(searchedShows);
+                        },
+                      )
+                      : ListView(
+                        children: [
+                          Text(
+                            "Trending Now",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          FutureBuilder<List<Show>>(
+                            future: popularShows,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              if (snapshot.hasError) {
+                                return Center(
+                                  child: Text('Error: ${snapshot.error}'),
+                                );
+                              }
+                              final popShows = snapshot.data!;
+                              return showCardList(popShows);
+                            },
+                          ),
+                          Text(
+                            "Top Rated",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          FutureBuilder<List<Show>>(
+                            future: topRatedShows,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              if (snapshot.hasError) {
+                                return Center(
+                                  child: Text('Error: ${snapshot.error}'),
+                                );
+                              }
+                              final topShows = snapshot.data!;
+                              return showCardList(topShows);
+                            },
+                          ),
+                        ],
+                      ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.lightBlue,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => UserProfileScreen()),
+          );
+        },
+        child: Icon(Icons.person),
+        tooltip: 'Profile',
+      ),
     );
   }
 
@@ -152,44 +193,44 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget searchResultList(List<Show> shows) {
     return ListView.separated(
-        itemCount: shows.length,
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        separatorBuilder: (context, index) => const Divider(thickness: 2.0, color: AppColors.darkBlue,),
-        itemBuilder: (context, index) {
-          final show = shows[index];
-          return Row(
-            children: [
-              Image.network(
-                'https://image.tmdb.org/t/p/w200${show.posterPath}',
-                width: 80,
-                height: 120,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: Colors.grey[300],
-                  height: 160,
-                  child: const Center(child: Icon(Icons.broken_image)),
-                ),
+      itemCount: shows.length,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      separatorBuilder:
+          (context, index) =>
+              const Divider(thickness: 2.0, color: AppColors.darkBlue),
+      itemBuilder: (context, index) {
+        final show = shows[index];
+        return Row(
+          children: [
+            Image.network(
+              'https://image.tmdb.org/t/p/w200${show.posterPath}',
+              width: 80,
+              height: 120,
+              fit: BoxFit.cover,
+              errorBuilder:
+                  (context, error, stackTrace) => Container(
+                    color: Colors.grey[300],
+                    height: 160,
+                    child: const Center(child: Icon(Icons.broken_image)),
+                  ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                children: [
+                  Text(
+                    show.name,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Icon(Icons.star, color: Colors.amberAccent),
+                  Text(show.rating.toString()),
+                ],
               ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  children: [
-                    Text(
-                      show.name,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Icon(Icons.star, color: Colors.amberAccent),
-                    Text(show.rating.toString()),
-                  ],
-                )
-              )
-            ],
-          );
-        }
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -221,24 +262,33 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
               child: Image.network(
                 'https://image.tmdb.org/t/p/w200${show.posterPath}',
                 width: 120,
                 height: 160,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: Colors.grey[300],
-                  height: 160,
-                  child: const Center(child: Icon(Icons.broken_image)),
-                ),
+                errorBuilder:
+                    (context, error, stackTrace) => Container(
+                      color: Colors.grey[300],
+                      height: 160,
+                      child: const Center(child: Icon(Icons.broken_image)),
+                    ),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 6.0,
+              ),
               child: Text(
                 show.name,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -250,13 +300,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   Icon(Icons.star, color: Colors.amberAccent),
                   Text(show.rating.toString()),
                 ],
-              )
+              ),
             ),
           ],
         ),
       ),
     );
   }
-
 }
-
