@@ -136,14 +136,14 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.lightBlue,
+        backgroundColor: AppColors.darkBlue,
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => UserProfileScreen()),
           );
         },
-        child: Icon(Icons.person),
+        child: Icon(Icons.person, color: AppColors.lightBlue),
         tooltip: 'Profile',
       ),
     );
