@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sceneit/screens/home_screen.dart';
 import '../widgets/logo_widget.dart';
 import '../widgets/textfield_widget.dart';
 import '../widgets/button_widget.dart';
@@ -56,8 +57,10 @@ class _LoginScreenState extends State<LoginScreen> {
         SnackBar(content: Text('Login successful!')),
       );
 
-      // TODO: Navigate to HomePage after login
-
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+      );
     } on FirebaseAuthException catch (e) {
       String message = 'Login failed.';
       if (e.code == 'user-not-found') {

@@ -41,7 +41,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+    return Scaffold(
+        appBar: AppBar(
+          title: Image.asset(
+            'assets/SceneItLogo.png',
+          ),
+          backgroundColor: AppColors.lightBlue,
+          centerTitle: true,
+        ),
+        backgroundColor: AppColors.lightBlue, // or AppColors.lightBlue if you prefer
+        body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -94,7 +104,8 @@ class _HomeScreenState extends State<HomeScreen> {
           )
         ],
       )
-      );
+      )
+    );
   }
 
   Widget showSearchBar() {
