@@ -7,7 +7,7 @@ class LogoWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Image.asset(
       'assets/SceneItLogo.png',
-      height: 80,
+      height: 100,
       fit: BoxFit.contain,
     );
   }
