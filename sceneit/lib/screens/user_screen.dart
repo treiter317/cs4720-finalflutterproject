@@ -140,7 +140,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.lightBlue,
         elevation: 0,
-        title: Text('My Profile'),
+        title: Image.asset('assets/SceneItLogo.png'),
         centerTitle: true,
         actions: [
           IconButton(
