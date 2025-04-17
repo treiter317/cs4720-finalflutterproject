@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class TextFieldWidget extends StatelessWidget {
+class TextFieldWidget extends StatefulWidget {
   final TextEditingController controller;
   final String hintText;
   final bool isPassword;
@@ -13,16 +13,40 @@ class TextFieldWidget extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _TextFieldWidgetState createState() => _TextFieldWidgetState();
+}
+
+class _TextFieldWidgetState extends State<TextFieldWidget> {
+  bool _passwordVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordVisible = !widget.isPassword;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: controller,
-      obscureText: isPassword,
+      controller: widget.controller,
+      obscureText: widget.isPassword && !_passwordVisible,
       decoration: InputDecoration(
-        hintText: hintText,
+        hintText: widget.hintText,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        suffixIcon: isPassword ? Icon(Icons.visibility_off) : null,
+        suffixIcon: widget.isPassword
+            ? IconButton(
+          icon: Icon(
+            _passwordVisible ? Icons.visibility : Icons.visibility_off,
+          ),
+          onPressed: () {
+            setState(() {
+              _passwordVisible = !_passwordVisible;
+            });
+          },
+        )
+            : null,
       ),
     );
   }

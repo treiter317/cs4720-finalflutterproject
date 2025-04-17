@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+//TODO: Fix this to have a normal stacked logowidget and the side by side logo
 class LogoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
