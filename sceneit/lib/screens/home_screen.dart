@@ -19,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool searchOpen = false;
   final TextEditingController searchController = TextEditingController();
 
+  // currently API read occurs for every input by user. Maybe optimize this in future to only be on search button click?
   void onSearchInput(String input) {
     if (input.isNotEmpty) {
       setState(() {
@@ -46,6 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Image.asset('assets/SceneItLogo.png'),
         backgroundColor: AppColors.lightBlue,
         centerTitle: true,
+        automaticallyImplyLeading: false,
       ),
       backgroundColor: AppColors.lightBlue,
       body: Padding(
@@ -135,6 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+      // this is temporary, soon will have bottom nav bar with this button and others
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.darkBlue,
         onPressed: () {
@@ -143,8 +146,8 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(builder: (context) => UserProfileScreen()),
           );
         },
-        child: Icon(Icons.person, color: Colors.white),
         tooltip: 'Profile',
+        child: Icon(Icons.person, color: Colors.white),
       ),
     );
   }
