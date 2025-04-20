@@ -65,27 +65,10 @@ class ShowDetailsScreen extends StatelessWidget {
             const SizedBox(height: 24),
             ButtonWidget(
               text: 'Add to Watchlist',
-              onPressed: () {}, // Or null if disabled
+              onPressed: () {},
               color: AppColors.darkBlue,
               fullWidth: true,
             ),
-
-
-            /// Cast listing
-            // const Text(
-            //   'Cast',
-            //   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            // ),
-            // const SizedBox(height: 8),
-            // show.cast != null && show.cast!.isNotEmpty
-            //     ? Wrap(
-            //   spacing: 12,
-            //   children: show.cast!
-            //       .map((actor) => Chip(label: Text(actor)))
-            //       .toList(),
-            // )
-            //     : const Text('Cast information not available.'),
-            //
             const SizedBox(height: 32),
 
             const Text(
