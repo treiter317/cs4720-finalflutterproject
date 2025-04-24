@@ -15,6 +15,9 @@ class UserProfileScreen extends StatefulWidget {
   @override
   _UserProfileScreenState createState() => _UserProfileScreenState();
 }
+//TODO: allow removing/ editing of reviews
+//TODO: show the rating of shows in the home screen. Both by sceneit users and tmdb
+//TODO: Allow adding a review in the home section direcftly
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
   String username = '';
