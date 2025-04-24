@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:sceneit/widgets/button_widget.dart';
 import '../constants/colors.dart';
@@ -32,12 +34,13 @@ class ShowDetailsScreen extends StatelessWidget {
                     width: 120,
                     height: 180,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: 120,
-                      height: 180,
-                      color: Colors.grey,
-                      child: const Icon(Icons.broken_image),
-                    ),
+                    errorBuilder:
+                        (context, error, stackTrace) => Container(
+                          width: 120,
+                          height: 180,
+                          color: Colors.grey,
+                          child: const Icon(Icons.broken_image),
+                        ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -65,7 +68,44 @@ class ShowDetailsScreen extends StatelessWidget {
             const SizedBox(height: 24),
             ButtonWidget(
               text: 'Add to Watchlist',
-              onPressed: () {},
+              onPressed: () async {
+                final user = FirebaseAuth.instance.currentUser;
+                if (user == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'You must be logged in to add to watchlist',
+                      ),
+                    ),
+                  );
+                  return;
+                }
+
+                try {
+                  final userDocRef = FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid);
+
+                  final showData = {
+                    'title': show.name,
+                    'posterPath': show.posterPath,
+                    'addedAt': DateTime.now(),
+                  };
+
+                  await userDocRef.update({
+                    'watchLater': FieldValue.arrayUnion([showData]),
+                  });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${show.name} added to Watchlist')),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to add to Watchlist: $e')),
+                  );
+                }
+              },
+
               color: AppColors.darkBlue,
               fullWidth: true,
             ),
