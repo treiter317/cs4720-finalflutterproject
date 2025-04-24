@@ -58,29 +58,25 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<void> _loadWatchlist() async {
     if (user == null) return;
 
-    final userDoc =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user!.uid)
-            .get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .collection('watchlist')
+        .get();
 
-    final List<dynamic>? saved = userDoc.data()?['watchLater'];
+    final loaded = snapshot.docs.map((doc) {
+      final data = doc.data();
+      return Show(
+        name: data['title'],
+        posterPath: data['posterPath'],
+        rating: 0,
+        overview: "",
+      );
+    }).toList();
 
-    if (saved != null) {
-      final loaded =
-          saved.map((item) {
-            return Show(
-              name: item['title'],
-              posterPath: item['posterPath'],
-              rating: 0,
-              overview: "",
-            );
-          }).toList();
-
-      setState(() {
-        watchlist = loaded;
-      });
-    }
+    setState(() {
+      watchlist = loaded;
+    });
   }
 
   Future<void> _loadReviews() async {
@@ -188,16 +184,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
-        .update({
-      'watchLater': FieldValue.arrayRemove([
-        {
-          'title': show.name,
-          'posterPath': show.posterPath,
-        }
-      ])
-    });
+        .collection('watchlist')
+        .doc(show.name)
+        .delete();
   }
-
 
   void _logout() async {
     await FirebaseAuth.instance.signOut();
@@ -268,9 +258,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 10),
                     if (watchlist.isNotEmpty) ...[
-                      const SizedBox(height: 30),
                       Text(
                         'Watchlist',
                         style: TextStyle(
@@ -295,7 +284,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ],
                     const SizedBox(height: 10),
                     if (myReviews.isNotEmpty) ...[
-                      const SizedBox(height: 30),
                       Text(
                         'My Reviews',
                         style: TextStyle(
@@ -374,87 +362,102 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text("Have you watched ${show.name}?"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Leave a review and rating"),
-              const SizedBox(height: 12),
-              TextField(
-                controller: commentController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: "Write your review...",
-                  border: OutlineInputBorder(),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              title: const Text("Leave a review and rating"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: commentController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      hintText: "Write your review...",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text("Rating: ${rating.toInt()} / 100"),
+                  Slider(
+                    value: rating,
+                    min: 0,
+                    max: 100,
+                    divisions: 100,
+                    label: rating.toInt().toString(),
+                    onChanged: (newRating) {
+                      setModalState(() {
+                        rating = newRating;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text("Cancel"),
                 ),
-              ),
-              const SizedBox(height: 12),
-              StatefulBuilder(
-                builder: (context, setModalState) {
-                  return Column(
-                    children: [
-                      Text("Rating: ${rating.toInt()} / 100"),
-                      Slider(
-                        value: rating,
-                        min: 0,
-                        max: 100,
-                        divisions: 100,
-                        label: rating.toInt().toString(),
-                        onChanged: (newRating) {
-                          setModalState(() {
-                            rating = newRating;
-                          });
-                        },
-                      ),
-                    ],
-                  );
-                },
-              ),
+                TextButton(
+                  onPressed: () async {
+                    try {
+                      await _removeFromWatchlist(show);
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Removed from watchlist")),
+                      );
+                    } catch (e) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Failed to remove: $e")),
+                      );
+                    }
+                  },
+                  child: const Text("Remove from Watchlist"),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final user = FirebaseAuth.instance.currentUser;
+                    if (user != null) {
+                      try {
+                        await FirebaseFirestore.instance
+                            .collection("users")
+                            .doc(user.uid)
+                            .collection("reviews")
+                            .doc(show.name)
+                            .set({
+                          "title": show.name,
+                          "posterPath": show.posterPath,
+                          "review": commentController.text,
+                          "rating": rating,
+                          "timestamp": FieldValue.serverTimestamp(),
+                        });
 
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () => _removeFromWatchlist(show),
-              child: const Text("Remove from Watchlist"),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final user = FirebaseAuth.instance.currentUser;
-                if (user != null) {
-                  await FirebaseFirestore.instance
-                      .collection("users")
-                      .doc(user.uid)
-                      .collection("reviews")
-                      .doc(show.name.toString())
-                      .set({
-                    "title": show.name,
-                    "posterPath": show.posterPath,
-                    "review": commentController.text,
-                    "rating": rating,
-                    "timestamp": FieldValue.serverTimestamp(),
-                  });
-
-                  _removeFromWatchlist(show);
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Review submitted!")),
-                  );
-                }
-              },
-              child: const Text("Submit Review"),
-            ),
-          ],
+                        await _loadWatchlist();
+                        await _loadReviews();
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Review submitted!")),
+                        );
+                      } catch (e) {
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Failed to submit review: $e")),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text("Submit Review"),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
-
   Widget reviewCard(Review review) {
     return Card(
       elevation: 3,
@@ -472,14 +475,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              'Reviewer: $username',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-              ),
-            ),
-            const SizedBox(height: 10),
             Text(
               review.reviewText,
               style: const TextStyle(fontSize: 14),

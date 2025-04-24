@@ -5,10 +5,66 @@ import 'package:sceneit/widgets/button_widget.dart';
 import '../constants/colors.dart';
 import '../data/Show.dart';
 
-class ShowDetailsScreen extends StatelessWidget {
+class ShowDetailsScreen extends StatefulWidget {
   final Show show;
-
   const ShowDetailsScreen({super.key, required this.show});
+
+  @override
+  State<ShowDetailsScreen> createState() => _ShowDetailsScreenState();
+}
+
+class ReviewWithAuthor {
+  final String username;
+  final String review;
+  final double rating;
+
+  ReviewWithAuthor({
+    required this.username,
+    required this.review,
+    required this.rating,
+  });
+}
+
+class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
+  List<ReviewWithAuthor> reviews = [];
+  bool loadingReviews = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReviews();
+  }
+
+  Future<void> _loadReviews() async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final usersSnapshot = await firestore.collection('users').get();
+
+    List<ReviewWithAuthor> allReviews = [];
+
+    for (final userDoc in usersSnapshot.docs) {
+      final username = userDoc.data()['username'] ?? 'Anonymous';
+      final reviewSnapshot = await firestore
+          .collection('users')
+          .doc(userDoc.id)
+          .collection('reviews')
+          .doc(widget.show.name)
+          .get();
+
+      if (reviewSnapshot.exists) {
+        final data = reviewSnapshot.data();
+        allReviews.add(ReviewWithAuthor(
+          username: username,
+          review: data?['review'] ?? '',
+          rating: (data?['rating'] ?? 0).toDouble(),
+        ));
+      }
+    }
+
+    setState(() {
+      reviews = allReviews;
+      loadingReviews = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,17 +86,16 @@ class ShowDetailsScreen extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
-                    'https://image.tmdb.org/t/p/w200${show.posterPath}',
+                    'https://image.tmdb.org/t/p/w200${widget.show.posterPath}',
                     width: 120,
                     height: 180,
                     fit: BoxFit.cover,
-                    errorBuilder:
-                        (context, error, stackTrace) => Container(
-                          width: 120,
-                          height: 180,
-                          color: Colors.grey,
-                          child: const Icon(Icons.broken_image),
-                        ),
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 120,
+                      height: 180,
+                      color: Colors.grey,
+                      child: const Icon(Icons.broken_image),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -49,7 +104,7 @@ class ShowDetailsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        show.name,
+                        widget.show.name,
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -57,7 +112,7 @@ class ShowDetailsScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        show.overview ?? 'No description available.',
+                        widget.show.overview ?? 'No description available.',
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],
@@ -73,31 +128,27 @@ class ShowDetailsScreen extends StatelessWidget {
                 if (user == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(
-                        'You must be logged in to add to watchlist',
-                      ),
+                      content: Text('You must be logged in to add to watchlist'),
                     ),
                   );
                   return;
                 }
 
                 try {
-                  final userDocRef = FirebaseFirestore.instance
+                  final watchlistRef = FirebaseFirestore.instance
                       .collection('users')
-                      .doc(user.uid);
+                      .doc(user.uid)
+                      .collection('watchlist')
+                      .doc(widget.show.name);
 
-                  final showData = {
-                    'title': show.name,
-                    'posterPath': show.posterPath,
+                  await watchlistRef.set({
+                    'title': widget.show.name,
+                    'posterPath': widget.show.posterPath,
                     'addedAt': DateTime.now(),
-                  };
-
-                  await userDocRef.update({
-                    'watchLater': FieldValue.arrayUnion([showData]),
                   });
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${show.name} added to Watchlist')),
+                    SnackBar(content: Text('${widget.show.name} added to Watchlist')),
                   );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -105,18 +156,54 @@ class ShowDetailsScreen extends StatelessWidget {
                   );
                 }
               },
-
               color: AppColors.darkBlue,
               fullWidth: true,
             ),
             const SizedBox(height: 32),
-
             const Text(
               'Reviews',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text('Reviews coming soon...'),
+            loadingReviews
+                ? const Center(child: CircularProgressIndicator())
+                : reviews.isEmpty
+                ? const Text("No reviews yet.")
+                : Expanded(
+              child: ListView.builder(
+                itemCount: reviews.length,
+                itemBuilder: (context, index) => reviewTile(reviews[index]),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget reviewTile(ReviewWithAuthor r) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              r.username,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              r.review,
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Rating: ${r.rating.toInt()} / 100',
+              style: TextStyle(fontSize: 13, color: Colors.amber[800]),
+            ),
           ],
         ),
       ),
