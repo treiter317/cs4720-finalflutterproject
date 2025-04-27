@@ -7,6 +7,7 @@ Future<void> showReviewModal({
   required String showName,
   required String showPosterPath,
   required VoidCallback onSubmit,
+  bool showRemoveButton = false, // <-- NEW PARAMETER
 }) async {
   final TextEditingController commentController = TextEditingController();
   double rating = 0;
@@ -50,6 +51,34 @@ Future<void> showReviewModal({
                 onPressed: () => Navigator.pop(context),
                 child: const Text("Cancel"),
               ),
+              if (showRemoveButton) // <-- Only show this button if needed
+                TextButton(
+                  onPressed: () async {
+                    final user = FirebaseAuth.instance.currentUser;
+                    if (user != null) {
+                      try {
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(user.uid)
+                            .collection('watchlist')
+                            .doc(showName)
+                            .delete();
+
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Removed from Watchlist")),
+                        );
+                        onSubmit();
+                      } catch (e) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Failed to remove: $e")),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text("Remove from Watchlist"),
+                ),
               ElevatedButton(
                 onPressed: () async {
                   final user = FirebaseAuth.instance.currentUser;

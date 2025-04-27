@@ -204,7 +204,16 @@ class _HomeScreenState extends State<HomeScreen> {
       const Divider(thickness: 2.0, color: AppColors.darkBlue),
       itemBuilder: (context, index) {
         final show = shows[index];
-        return Row(
+        return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ShowDetailsScreen(show: show),
+                ),
+              );
+            },
+        child: Row(
           children: [
             Image.network(
               'https://image.tmdb.org/t/p/w200${show.posterPath}',
@@ -234,6 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
+        ),
         );
       },
     );

@@ -18,7 +18,6 @@ class UserProfileScreen extends StatefulWidget {
 }
 
 //TODO: show the rating of shows in the home screen. Both by sceneit users and tmdb
-//TODO: add show details for searched
 //TODO: add an actual nav bar
 class _UserProfileScreenState extends State<UserProfileScreen> {
   String username = '';
@@ -75,7 +74,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           return Show(
             name: data['title'],
             posterPath: data['posterPath'],
-            rating: 0,
+            rating: data['rating'],
             overview: "",
           );
         }).toList();
@@ -179,22 +178,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 ),
           ),
     );
-  }
-
-  Future<void> _removeFromWatchlist(Show show) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    setState(() {
-      watchlist.removeWhere((s) => s.name == show.name);
-    });
-
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('watchlist')
-        .doc(show.name)
-        .delete();
   }
 
   void _logout() async {
@@ -321,15 +304,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Widget showCard(Show show) {
     return GestureDetector(
-      onTap: () => showReviewModal(
-        context: context,
-        showName: show.name,
-        showPosterPath: show.posterPath ?? '',
-        onSubmit: () async {
-          await _loadReviews();
-          await _loadWatchlist();
-        },
-      ),
+      onTap:
+          () => showReviewModal(
+            context: context,
+            showName: show.name,
+            showPosterPath: show.posterPath ?? '',
+            onSubmit: () async {
+              await _loadReviews();
+              await _loadWatchlist();
+            },
+            showRemoveButton: true,
+          ),
       child: SizedBox(
         width: 120,
         child: Card(
@@ -370,6 +355,19 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.star, color: Colors.amberAccent, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      show.rating.toString(),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ],
                 ),
               ),
             ],
