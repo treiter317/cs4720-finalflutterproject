@@ -3,10 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:sceneit/widgets/button_widget.dart';
 import '../constants/colors.dart';
+import '../data/Review.dart';
 import '../data/Show.dart';
+import '../widgets/review_widget.dart';
 
 class ShowDetailsScreen extends StatefulWidget {
   final Show show;
+
   const ShowDetailsScreen({super.key, required this.show});
 
   @override
@@ -15,11 +18,13 @@ class ShowDetailsScreen extends StatefulWidget {
 
 class ReviewWithAuthor {
   final String username;
+  final String userId;
   final String review;
   final double rating;
 
   ReviewWithAuthor({
     required this.username,
+    required this.userId,
     required this.review,
     required this.rating,
   });
@@ -43,20 +48,24 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
 
     for (final userDoc in usersSnapshot.docs) {
       final username = userDoc.data()['username'] ?? 'Anonymous';
-      final reviewSnapshot = await firestore
-          .collection('users')
-          .doc(userDoc.id)
-          .collection('reviews')
-          .doc(widget.show.name)
-          .get();
+      final reviewSnapshot =
+          await firestore
+              .collection('users')
+              .doc(userDoc.id)
+              .collection('reviews')
+              .doc(widget.show.name)
+              .get();
 
       if (reviewSnapshot.exists) {
         final data = reviewSnapshot.data();
-        allReviews.add(ReviewWithAuthor(
-          username: username,
-          review: data?['review'] ?? '',
-          rating: (data?['rating'] ?? 0).toDouble(),
-        ));
+        allReviews.add(
+          ReviewWithAuthor(
+            username: username,
+            userId: userDoc.id,
+            review: data?['review'] ?? '',
+            rating: (data?['rating'] ?? 0).toDouble(),
+          ),
+        );
       }
     }
 
@@ -75,7 +84,8 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
         centerTitle: true,
       ),
       backgroundColor: AppColors.lightBlue,
-      body: Padding(
+    body: SingleChildScrollView(
+    child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,12 +100,13 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                     width: 120,
                     height: 180,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      width: 120,
-                      height: 180,
-                      color: Colors.grey,
-                      child: const Icon(Icons.broken_image),
-                    ),
+                    errorBuilder:
+                        (context, error, stackTrace) => Container(
+                          width: 120,
+                          height: 180,
+                          color: Colors.grey,
+                          child: const Icon(Icons.broken_image),
+                        ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -128,7 +139,9 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                 if (user == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('You must be logged in to add to watchlist'),
+                      content: Text(
+                        'You must be logged in to add to watchlist',
+                      ),
                     ),
                   );
                   return;
@@ -148,7 +161,9 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                   });
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${widget.show.name} added to Watchlist')),
+                    SnackBar(
+                      content: Text('${widget.show.name} added to Watchlist'),
+                    ),
                   );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -169,13 +184,23 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : reviews.isEmpty
                 ? const Text("No reviews yet.")
-                : Expanded(
-              child: ListView.builder(
-                itemCount: reviews.length,
-                itemBuilder: (context, index) => reviewTile(reviews[index]),
+                :   const SizedBox(height: 10),
+            ...reviews.map((r) => Padding(
+              padding: const EdgeInsets.only(bottom: 24.0),
+              child: ReviewCard(
+                review: Review(
+                  title: widget.show.name,
+                  posterPath: widget.show.posterPath ?? '',
+                  reviewText: r.review,
+                  rating: r.rating,
+                  username: r.username,
+                ),
+                isMine: FirebaseAuth.instance.currentUser?.uid == r.userId,
+                onUpdate: _loadReviews,
               ),
-            ),
+            )),
           ],
+        ),
         ),
       ),
     );
@@ -195,10 +220,7 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 4),
-            Text(
-              r.review,
-              style: TextStyle(fontSize: 14),
-            ),
+            Text(r.review, style: TextStyle(fontSize: 14)),
             const SizedBox(height: 6),
             Text(
               'Rating: ${r.rating.toInt()} / 100',

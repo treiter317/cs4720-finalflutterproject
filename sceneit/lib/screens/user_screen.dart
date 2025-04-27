@@ -9,16 +9,17 @@ import 'package:sceneit/screens/show_detail_screen.dart';
 import '../constants/colors.dart';
 import '../data/Review.dart';
 import '../data/Show.dart';
+import '../widgets/review_widget.dart';
 import 'login_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   @override
   _UserProfileScreenState createState() => _UserProfileScreenState();
 }
-//TODO: allow removing/ editing of reviews
 //TODO: show the rating of shows in the home screen. Both by sceneit users and tmdb
 //TODO: Allow adding a review in the home section direcftly
-
+//TODO: add show details for searched
+//TODO: add an actual nav bar
 class _UserProfileScreenState extends State<UserProfileScreen> {
   String username = '';
   String profilePicUrl = '';
@@ -302,7 +303,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             final review = myReviews[index];
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 12.0),
-                              child: reviewCard(review),
+                              child: ReviewCard(
+                                review: review,
+                                isMine: true,
+                                onUpdate: () async {
+                                  await _loadReviews();
+                                },
+                              ),
                             );
                           },
                         ),
@@ -459,37 +466,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           },
         );
       },
-    );
-  }
-  Widget reviewCard(Review review) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              review.title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              review.reviewText,
-              style: const TextStyle(fontSize: 14),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Rating: ${review.rating.toInt()} / 100',
-              style: TextStyle(fontSize: 13, color: Colors.amber[800]),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

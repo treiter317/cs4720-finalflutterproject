@@ -3,12 +3,14 @@ class Review {
   final String posterPath;
   final String reviewText;
   final double rating;
+  final String? username;
 
   Review({
     required this.title,
     required this.posterPath,
     required this.reviewText,
     required this.rating,
+    this.username,
   });
 
   factory Review.fromMap(Map<String, dynamic> map) {
@@ -17,6 +19,7 @@ class Review {
       posterPath: map['posterPath'] ?? '',
       reviewText: map['review'] ?? '',
       rating: (map['rating'] ?? 0).toDouble(),
+      username: map['username'],
     );
   }
 }
