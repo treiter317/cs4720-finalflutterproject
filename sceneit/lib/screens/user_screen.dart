@@ -16,8 +16,6 @@ class UserProfileScreen extends StatefulWidget {
   @override
   _UserProfileScreenState createState() => _UserProfileScreenState();
 }
-
-//TODO: show the rating of shows in the home screen. Both by sceneit users and tmdb
 //TODO: add an actual nav bar
 class _UserProfileScreenState extends State<UserProfileScreen> {
   String username = '';
