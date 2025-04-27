@@ -16,6 +16,7 @@ class UserProfileScreen extends StatefulWidget {
   @override
   _UserProfileScreenState createState() => _UserProfileScreenState();
 }
+
 //TODO: show the rating of shows in the home screen. Both by sceneit users and tmdb
 //TODO: Allow adding a review in the home section direcftly
 //TODO: add show details for searched
@@ -62,21 +63,23 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<void> _loadWatchlist() async {
     if (user == null) return;
 
-    final snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .collection('watchlist')
-        .get();
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user!.uid)
+            .collection('watchlist')
+            .get();
 
-    final loaded = snapshot.docs.map((doc) {
-      final data = doc.data();
-      return Show(
-        name: data['title'],
-        posterPath: data['posterPath'],
-        rating: 0,
-        overview: "",
-      );
-    }).toList();
+    final loaded =
+        snapshot.docs.map((doc) {
+          final data = doc.data();
+          return Show(
+            name: data['title'],
+            posterPath: data['posterPath'],
+            rating: 0,
+            overview: "",
+          );
+        }).toList();
 
     setState(() {
       watchlist = loaded;
@@ -86,13 +89,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<void> _loadReviews() async {
     if (user == null) return;
 
-    final snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .collection('reviews')
-        .get();
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user!.uid)
+            .collection('reviews')
+            .get();
 
-    final reviews = snapshot.docs.map((doc) => Review.fromMap(doc.data())).toList();
+    final reviews =
+        snapshot.docs.map((doc) => Review.fromMap(doc.data())).toList();
 
     setState(() {
       myReviews = reviews;
@@ -221,102 +226,95 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       body:
           isLoading
               ? Center(child: CircularProgressIndicator())
-              : Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 40,
-                            backgroundImage: NetworkImage(profilePicUrl),
-                          ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  username,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
+              : SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 40,
+                              backgroundImage: NetworkImage(profilePicUrl),
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    username,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text('Joined: $joinedDate'),
-                              ],
+                                  const SizedBox(height: 4),
+                                  Text('Joined: $joinedDate'),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: _editProfileDialog,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      if (watchlist.isNotEmpty) ...[
+                        Text(
+                          'Watchlist',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 240,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: watchlist.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 12.0),
+                                child: showCard(watchlist[index]),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      if (myReviews.isNotEmpty) ...[
+                        Text(
+                          'My Reviews',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        ...myReviews.map(
+                          (review) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: ReviewCard(
+                              review: review,
+                              isMine: true,
+                              onUpdate: _loadReviews,
                             ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: _editProfileDialog,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    if (watchlist.isNotEmpty) ...[
-                      Text(
-                        'Watchlist',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        height: 240,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: watchlist.length,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 12.0),
-                              child: showCard(watchlist[index]),
-                            );
-                          },
-                        ),
-                      ),
+                      ],
                     ],
-                    const SizedBox(height: 10),
-                    if (myReviews.isNotEmpty) ...[
-                      Text(
-                        'My Reviews',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: myReviews.length,
-                          itemBuilder: (context, index) {
-                            final review = myReviews[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12.0),
-                              child: ReviewCard(
-                                review: review,
-                                isMine: true,
-                                onUpdate: () async {
-                                  await _loadReviews();
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ]
-
-                  ],
+                  ),
                 ),
               ),
     );
@@ -329,26 +327,34 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         width: 120,
         child: Card(
           elevation: 4,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
                 child: Image.network(
                   'https://image.tmdb.org/t/p/w200${show.posterPath}',
                   width: 120,
                   height: 160,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: Colors.grey[300],
-                    height: 160,
-                    child: const Center(child: Icon(Icons.broken_image)),
-                  ),
+                  errorBuilder:
+                      (context, error, stackTrace) => Container(
+                        color: Colors.grey[300],
+                        height: 160,
+                        child: const Center(child: Icon(Icons.broken_image)),
+                      ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 6.0,
+                ),
                 child: Text(
                   show.name,
                   style: const TextStyle(
@@ -365,6 +371,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       ),
     );
   }
+
   void _showWatchModal(Show show) {
     final TextEditingController commentController = TextEditingController();
     double rating = 0;
@@ -438,12 +445,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             .collection("reviews")
                             .doc(show.name)
                             .set({
-                          "title": show.name,
-                          "posterPath": show.posterPath,
-                          "review": commentController.text,
-                          "rating": rating,
-                          "timestamp": FieldValue.serverTimestamp(),
-                        });
+                              "title": show.name,
+                              "posterPath": show.posterPath,
+                              "review": commentController.text,
+                              "rating": rating,
+                              "timestamp": FieldValue.serverTimestamp(),
+                            });
 
                         await _loadWatchlist();
                         await _loadReviews();
@@ -454,7 +461,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       } catch (e) {
                         Navigator.of(context).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Failed to submit review: $e")),
+                          SnackBar(
+                            content: Text("Failed to submit review: $e"),
+                          ),
                         );
                       }
                     }
