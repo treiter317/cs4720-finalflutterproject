@@ -5,6 +5,7 @@ import 'package:sceneit/widgets/button_widget.dart';
 import '../constants/colors.dart';
 import '../data/Review.dart';
 import '../data/Show.dart';
+import '../widgets/review_dialog.dart';
 import '../widgets/review_widget.dart';
 
 class ShowDetailsScreen extends StatefulWidget {
@@ -172,6 +173,32 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                 }
               },
               color: AppColors.darkBlue,
+              fullWidth: true,
+            ),
+            const SizedBox(height: 12),
+            ButtonWidget(
+              text: 'Leave A Review',
+              onPressed: () async {
+                final user = FirebaseAuth.instance.currentUser;
+                if (user == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('You must be logged in to leave a review'),
+                    ),
+                  );
+                  return;
+                }
+
+                await showReviewModal(
+                  context: context,
+                  showName: widget.show.name,
+                  showPosterPath: widget.show.posterPath ?? '',
+                  onSubmit: () async {
+                    await _loadReviews();
+                  },
+                );
+              },
+              color: AppColors.blueLink,
               fullWidth: true,
             ),
             const SizedBox(height: 32),

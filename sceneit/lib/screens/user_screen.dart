@@ -5,10 +5,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:sceneit/screens/show_detail_screen.dart';
 import '../constants/colors.dart';
 import '../data/Review.dart';
 import '../data/Show.dart';
+import '../widgets/review_dialog.dart';
 import '../widgets/review_widget.dart';
 import 'login_screen.dart';
 
@@ -18,7 +18,6 @@ class UserProfileScreen extends StatefulWidget {
 }
 
 //TODO: show the rating of shows in the home screen. Both by sceneit users and tmdb
-//TODO: Allow adding a review in the home section direcftly
 //TODO: add show details for searched
 //TODO: add an actual nav bar
 class _UserProfileScreenState extends State<UserProfileScreen> {
@@ -322,7 +321,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Widget showCard(Show show) {
     return GestureDetector(
-      onTap: () => _showWatchModal(show),
+      onTap: () => showReviewModal(
+        context: context,
+        showName: show.name,
+        showPosterPath: show.posterPath ?? '',
+        onSubmit: () async {
+          await _loadReviews();
+          await _loadWatchlist();
+        },
+      ),
       child: SizedBox(
         width: 120,
         child: Card(
@@ -369,112 +376,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  void _showWatchModal(Show show) {
-    final TextEditingController commentController = TextEditingController();
-    double rating = 0;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return AlertDialog(
-              title: const Text("Leave a review and rating"),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: commentController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      hintText: "Write your review...",
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text("Rating: ${rating.toInt()} / 100"),
-                  Slider(
-                    value: rating,
-                    min: 0,
-                    max: 100,
-                    divisions: 100,
-                    label: rating.toInt().toString(),
-                    onChanged: (newRating) {
-                      setModalState(() {
-                        rating = newRating;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text("Cancel"),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    try {
-                      await _removeFromWatchlist(show);
-                      Navigator.of(context).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Removed from watchlist")),
-                      );
-                    } catch (e) {
-                      Navigator.of(context).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Failed to remove: $e")),
-                      );
-                    }
-                  },
-                  child: const Text("Remove from Watchlist"),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final user = FirebaseAuth.instance.currentUser;
-                    if (user != null) {
-                      try {
-                        await FirebaseFirestore.instance
-                            .collection("users")
-                            .doc(user.uid)
-                            .collection("reviews")
-                            .doc(show.name)
-                            .set({
-                              "title": show.name,
-                              "posterPath": show.posterPath,
-                              "review": commentController.text,
-                              "rating": rating,
-                              "timestamp": FieldValue.serverTimestamp(),
-                            });
-
-                        await _loadWatchlist();
-                        await _loadReviews();
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Review submitted!")),
-                        );
-                      } catch (e) {
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Failed to submit review: $e"),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  child: const Text("Submit Review"),
-                ),
-              ],
-            );
-          },
-        );
-      },
     );
   }
 }
