@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:sceneit/screens/show_detail_screen.dart';
 import '../constants/colors.dart';
 import '../data/Review.dart';
 import '../data/Show.dart';
@@ -73,7 +74,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             name: data['title'],
             posterPath: data['posterPath'],
             rating: data['rating'],
-            overview: "",
+            overview: data['overview'],
           );
         }).toList();
 
@@ -249,41 +250,45 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      if (watchlist.isNotEmpty) ...[
-                        Text(
-                          'Watchlist',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      Text(
+                        'Watchlist',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          height: 240,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: watchlist.length,
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 12.0),
-                                child: showCard(watchlist[index]),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
+                      ),
                       const SizedBox(height: 10),
-                      if (myReviews.isNotEmpty) ...[
-                        Text(
-                          'My Reviews',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      watchlist.isNotEmpty
+                          ? SizedBox(
+                        height: 240,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: watchlist.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 12.0),
+                              child: showCard(watchlist[index]),
+                            );
+                          },
                         ),
-                        const SizedBox(height: 10),
-                        ...myReviews.map(
-                          (review) => Padding(
+                      )
+                          : Text(
+                        "No watchlist yet. Go add some!",
+                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'My Reviews',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      myReviews.isNotEmpty
+                          ? Column(
+                        children: myReviews.map(
+                              (review) => Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: ReviewCard(
                               review: review,
@@ -291,8 +296,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               onUpdate: _loadReviews,
                             ),
                           ),
-                        ),
-                      ],
+                        ).toList(),
+                      )
+                          : Text(
+                        "No reviews yet. Go leave one!",
+                        style: TextStyle(fontSize: 16, color: Colors.black54),
+                      ),
                     ],
                   ),
                 ),
@@ -302,17 +311,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Widget showCard(Show show) {
     return GestureDetector(
-      onTap:
-          () => showReviewModal(
-            context: context,
-            showName: show.name,
-            showPosterPath: show.posterPath ?? '',
-            onSubmit: () async {
-              await _loadReviews();
-              await _loadWatchlist();
-            },
-            showRemoveButton: true,
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ShowDetailsScreen(show: show),
           ),
+        );
+        await _loadWatchlist();
+      },
       child: SizedBox(
         width: 120,
         child: Card(
