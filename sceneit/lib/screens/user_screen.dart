@@ -74,7 +74,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             name: data['title'],
             posterPath: data['posterPath'],
             rating: data['rating'],
-            overview: data['overview'],
+            overview: data['overview'] ?? '',
           );
         }).toList();
 
