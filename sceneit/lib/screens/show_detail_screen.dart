@@ -277,10 +277,12 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
               loadingReviews
                   ? const Center(child: CircularProgressIndicator())
                   : reviews.isEmpty
-                  ? const Text("No reviews yet.")
+                  ? const Text(
+                  "No reviews yet. Go leave one!",
+                  style: TextStyle(fontSize: 16, color: Colors.black54),)
                   : const SizedBox(height: 10),
               ...reviews.map((r) => Padding(
-                padding: const EdgeInsets.only(bottom: 24.0),
+                padding: const EdgeInsets.only(bottom: 6.0),
                 child: ReviewCard(
                   review: Review(
                     title: widget.show.name,
