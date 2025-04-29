@@ -310,7 +310,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           () => showReviewModal(
             context: context,
             showName: show.name,
-            showPosterPath: show.posterPath ?? '',
+            showPosterPath: show.posterPath,
             onSubmit: () async {
               await _loadReviews();
               await _loadWatchlist();

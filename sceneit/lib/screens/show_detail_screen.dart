@@ -179,7 +179,7 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
 
                         const SizedBox(height: 8),
                         Text(
-                          widget.show.overview ?? 'No description available.',
+                          widget.show.overview,
                           style: const TextStyle(fontSize: 16),
                         ),
                       ],
@@ -250,7 +250,7 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                   await showReviewModal(
                     context: context,
                     showName: widget.show.name,
-                    showPosterPath: widget.show.posterPath ?? '',
+                    showPosterPath: widget.show.posterPath,
                     onSubmit: () async {
                       await _loadReviews();
                     },
@@ -276,7 +276,7 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                   child: ReviewCard(
                     review: Review(
                       title: widget.show.name,
-                      posterPath: widget.show.posterPath ?? '',
+                      posterPath: widget.show.posterPath,
                       reviewText: r.review,
                       rating: r.rating,
                       username: r.username,
