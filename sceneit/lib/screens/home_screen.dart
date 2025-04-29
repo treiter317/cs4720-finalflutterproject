@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sceneit/data/Show.dart';
 import 'package:sceneit/data/tmdb_reader.dart';
 import 'package:sceneit/screens/show_detail_screen.dart';
+import 'package:sceneit/widgets/navbar.dart';
 import 'user_screen.dart';
 import '../constants/colors.dart';
 
@@ -138,18 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      // this is temporary, soon will have bottom nav bar with this button and others
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.darkBlue,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => UserProfileScreen()),
-          );
-        },
-        tooltip: 'Profile',
-        child: Icon(Icons.person, color: Colors.white),
-      ),
+      bottomNavigationBar: Navbar(selectedIndex: 1,),
     );
   }
 

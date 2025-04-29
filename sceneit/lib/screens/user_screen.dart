@@ -8,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import '../constants/colors.dart';
 import '../data/Review.dart';
 import '../data/Show.dart';
+import '../widgets/navbar.dart';
 import '../widgets/review_dialog.dart';
 import '../widgets/review_widget.dart';
 import 'login_screen.dart';
@@ -16,7 +17,7 @@ class UserProfileScreen extends StatefulWidget {
   @override
   _UserProfileScreenState createState() => _UserProfileScreenState();
 }
-//TODO: add an actual nav bar
+
 class _UserProfileScreenState extends State<UserProfileScreen> {
   String username = '';
   String profilePicUrl = '';
@@ -190,11 +191,13 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightBlue,
+
       appBar: AppBar(
         backgroundColor: AppColors.lightBlue,
         elevation: 0,
         title: Image.asset('assets/SceneItLogo.png'),
         centerTitle: true,
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             onPressed: _logout,
@@ -203,6 +206,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: Navbar(selectedIndex: 2,),
       body:
           isLoading
               ? Center(child: CircularProgressIndicator())

@@ -5,6 +5,7 @@ import 'package:sceneit/widgets/button_widget.dart';
 import '../constants/colors.dart';
 import '../data/Review.dart';
 import '../data/Show.dart';
+import '../widgets/navbar.dart';
 import '../widgets/review_dialog.dart';
 import '../widgets/review_widget.dart';
 
@@ -20,12 +21,14 @@ class ShowDetailsScreen extends StatefulWidget {
 class ReviewWithAuthor {
   final String username;
   final String userId;
+  final String? profilePic;
   final String review;
   final double rating;
 
   ReviewWithAuthor({
     required this.username,
     required this.userId,
+    this.profilePic,
     required this.review,
     required this.rating,
   });
@@ -53,12 +56,16 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
 
     for (final userDoc in usersSnapshot.docs) {
       final username = userDoc.data()['username'] ?? 'Anonymous';
-      final reviewSnapshot = await firestore
-          .collection('users')
-          .doc(userDoc.id)
-          .collection('reviews')
-          .doc(widget.show.name)
-          .get();
+      final profilePic =
+          userDoc.data()['profilePic'] ??
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRmK71ObBifzt00f_UVxSxZrB8tB9YxnKjB7Q&s';
+      final reviewSnapshot =
+          await firestore
+              .collection('users')
+              .doc(userDoc.id)
+              .collection('reviews')
+              .doc(widget.show.name)
+              .get();
 
       if (reviewSnapshot.exists) {
         final data = reviewSnapshot.data();
@@ -69,6 +76,7 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
             userId: userDoc.id,
             review: data?['review'] ?? '',
             rating: reviewRating,
+            profilePic: profilePic,
           ),
         );
         totalRating += reviewRating;
@@ -93,6 +101,7 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
         centerTitle: true,
       ),
       backgroundColor: AppColors.lightBlue,
+      bottomNavigationBar: Navbar(selectedIndex: 1),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -109,12 +118,15 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                       width: 120,
                       height: 180,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: 120,
-                        height: 180,
-                        color: Colors.grey,
-                        child: const Center(child: Icon(Icons.broken_image)),
-                      ),
+                      errorBuilder:
+                          (context, error, stackTrace) => Container(
+                            width: 120,
+                            height: 180,
+                            color: Colors.grey,
+                            child: const Center(
+                              child: Icon(Icons.broken_image),
+                            ),
+                          ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -135,7 +147,10 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                           children: [
                             Row(
                               children: [
-                                const Icon(Icons.star, color: Colors.amberAccent),
+                                const Icon(
+                                  Icons.star,
+                                  color: Colors.amberAccent,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${widget.show.rating.toStringAsFixed(1)} (TMDB)',
@@ -146,7 +161,10 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                const Icon(Icons.movie, color: Colors.blueAccent),
+                                const Icon(
+                                  Icons.movie,
+                                  color: Colors.blueAccent,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   sceneItReviewCount > 0
@@ -177,7 +195,9 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                   if (user == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('You must be logged in to add to watchlist'),
+                        content: Text(
+                          'You must be logged in to add to watchlist',
+                        ),
                       ),
                     );
                     return;
@@ -219,7 +239,9 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                   if (user == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('You must be logged in to leave a review'),
+                        content: Text(
+                          'You must be logged in to leave a review',
+                        ),
                       ),
                     );
                     return;
@@ -248,20 +270,24 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                   : reviews.isEmpty
                   ? const Text("No reviews yet.")
                   : const SizedBox(height: 10),
-              ...reviews.map((r) => Padding(
-                padding: const EdgeInsets.only(bottom: 24.0),
-                child: ReviewCard(
-                  review: Review(
-                    title: widget.show.name,
-                    posterPath: widget.show.posterPath ?? '',
-                    reviewText: r.review,
-                    rating: r.rating,
-                    username: r.username,
+              ...reviews.map(
+                (r) => Padding(
+                  padding: const EdgeInsets.only(bottom: 24.0),
+                  child: ReviewCard(
+                    review: Review(
+                      title: widget.show.name,
+                      posterPath: widget.show.posterPath ?? '',
+                      reviewText: r.review,
+                      rating: r.rating,
+                      username: r.username,
+                      userId: r.userId,
+                      userProfilePhoto: r.profilePic,
+                    ),
+                    isMine: FirebaseAuth.instance.currentUser?.uid == r.userId,
+                    onUpdate: _loadReviews,
                   ),
-                  isMine: FirebaseAuth.instance.currentUser?.uid == r.userId,
-                  onUpdate: _loadReviews,
                 ),
-              )),
+              ),
             ],
           ),
         ),
