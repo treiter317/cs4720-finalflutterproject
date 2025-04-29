@@ -103,7 +103,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     ),
                   );
                 }
-                final chats = snapshot.data!.docs;
+                final rawChats = snapshot.data!.docs;
+
+                final chats = List.from(rawChats)..sort((a, b) {
+                  final aTime = a['lastMessageTimestamp'];
+                  final bTime = b['lastMessageTimestamp'];
+                  return bTime.compareTo(aTime);
+                });
 
                 return ListView.builder(
                   itemCount: chats.length,
