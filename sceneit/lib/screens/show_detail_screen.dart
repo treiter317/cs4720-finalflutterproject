@@ -39,11 +39,38 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
   bool loadingReviews = true;
   double sceneItAvgRating = 0.0;
   int sceneItReviewCount = 0;
+  bool isInWatchlist = false;
+  bool checkingWatchlist = true;
+
 
   @override
   void initState() {
     super.initState();
     _loadReviews();
+    _checkWatchlist();
+  }
+
+  Future<void> _checkWatchlist() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() {
+        isInWatchlist = false;
+        checkingWatchlist = false;
+      });
+      return;
+    }
+
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('watchlist')
+        .doc(widget.show.name)
+        .get();
+
+    setState(() {
+      isInWatchlist = doc.exists;
+      checkingWatchlist = false;
+    });
   }
 
   Future<void> _loadReviews() async {
@@ -76,7 +103,6 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
             userId: userDoc.id,
             review: data?['review'] ?? '',
             rating: reviewRating,
-            profilePic: profilePic,
           ),
         );
         totalRating += reviewRating;
@@ -101,7 +127,6 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
         centerTitle: true,
       ),
       backgroundColor: AppColors.lightBlue,
-      bottomNavigationBar: Navbar(selectedIndex: 1),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -188,49 +213,51 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-              ButtonWidget(
-                text: 'Add to Watchlist',
+              checkingWatchlist
+                  ? const Center(child: CircularProgressIndicator())
+                  : ButtonWidget(
+                text: isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist',
                 onPressed: () async {
                   final user = FirebaseAuth.instance.currentUser;
                   if (user == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text(
-                          'You must be logged in to add to watchlist',
-                        ),
+                        content: Text('You must be logged in to manage watchlist'),
                       ),
                     );
                     return;
                   }
 
-                  try {
-                    final watchlistRef = FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(user.uid)
-                        .collection('watchlist')
-                        .doc(widget.show.name);
+                  final watchlistRef = FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .collection('watchlist')
+                      .doc(widget.show.name);
 
+                  if (isInWatchlist) {
+                    await watchlistRef.delete();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${widget.show.name} removed from Watchlist')),
+                    );
+                  } else {
                     await watchlistRef.set({
                       'title': widget.show.name,
                       'posterPath': widget.show.posterPath,
                       'rating': widget.show.rating,
+                      'overview': widget.show.overview,
                       'addedAt': DateTime.now(),
                     });
-
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${widget.show.name} added to Watchlist'),
-                      ),
-                    );
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to add to Watchlist: $e')),
+                      SnackBar(content: Text('${widget.show.name} added to Watchlist')),
                     );
                   }
+
+                  _checkWatchlist();
                 },
                 color: AppColors.darkBlue,
                 fullWidth: true,
               ),
+
               const SizedBox(height: 12),
               ButtonWidget(
                 text: 'Leave A Review',
@@ -268,24 +295,24 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
               loadingReviews
                   ? const Center(child: CircularProgressIndicator())
                   : reviews.isEmpty
-                  ? const Text("No reviews yet.")
+                  ? const Text(
+                  "No reviews yet. Go leave one!",
+                  style: TextStyle(fontSize: 16, color: Colors.black54),)
                   : const SizedBox(height: 10),
-              ...reviews.map(
-                (r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 24.0),
-                  child: ReviewCard(
-                    review: Review(
-                      title: widget.show.name,
-                      posterPath: widget.show.posterPath,
-                      reviewText: r.review,
-                      rating: r.rating,
-                      username: r.username,
-                      userId: r.userId,
-                      userProfilePhoto: r.profilePic,
-                    ),
-                    isMine: FirebaseAuth.instance.currentUser?.uid == r.userId,
-                    onUpdate: _loadReviews,
+              ...reviews.map((r) => Padding(
+                padding: const EdgeInsets.only(bottom: 6.0),
+                child: ReviewCard(
+                  review: Review(
+                    title: widget.show.name,
+                    posterPath: widget.show.posterPath,
+                    reviewText: r.review,
+                    rating: r.rating,
+                    username: r.username,
+                    userId: r.userId,
+                    userProfilePhoto: r.profilePic,
                   ),
+                  isMine: FirebaseAuth.instance.currentUser?.uid == r.userId,
+                  onUpdate: _loadReviews,
                 ),
               ),
             ],
