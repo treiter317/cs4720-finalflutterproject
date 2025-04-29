@@ -42,7 +42,6 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
   bool isInWatchlist = false;
   bool checkingWatchlist = true;
 
-
   @override
   void initState() {
     super.initState();
@@ -60,12 +59,13 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
       return;
     }
 
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('watchlist')
-        .doc(widget.show.name)
-        .get();
+    final doc =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('watchlist')
+            .doc(widget.show.name)
+            .get();
 
     setState(() {
       isInWatchlist = doc.exists;
@@ -101,6 +101,7 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
           ReviewWithAuthor(
             username: username,
             userId: userDoc.id,
+            profilePic: profilePic,
             review: data?['review'] ?? '',
             rating: reviewRating,
           ),
@@ -127,6 +128,7 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
         centerTitle: true,
       ),
       backgroundColor: AppColors.lightBlue,
+      bottomNavigationBar: Navbar(selectedIndex: 1,),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -216,47 +218,60 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
               checkingWatchlist
                   ? const Center(child: CircularProgressIndicator())
                   : ButtonWidget(
-                text: isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist',
-                onPressed: () async {
-                  final user = FirebaseAuth.instance.currentUser;
-                  if (user == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('You must be logged in to manage watchlist'),
-                      ),
-                    );
-                    return;
-                  }
+                    text:
+                        isInWatchlist
+                            ? 'Remove from Watchlist'
+                            : 'Add to Watchlist',
+                    onPressed: () async {
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'You must be logged in to manage watchlist',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
 
-                  final watchlistRef = FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(user.uid)
-                      .collection('watchlist')
-                      .doc(widget.show.name);
+                      final watchlistRef = FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(user.uid)
+                          .collection('watchlist')
+                          .doc(widget.show.name);
 
-                  if (isInWatchlist) {
-                    await watchlistRef.delete();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${widget.show.name} removed from Watchlist')),
-                    );
-                  } else {
-                    await watchlistRef.set({
-                      'title': widget.show.name,
-                      'posterPath': widget.show.posterPath,
-                      'rating': widget.show.rating,
-                      'overview': widget.show.overview,
-                      'addedAt': DateTime.now(),
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${widget.show.name} added to Watchlist')),
-                    );
-                  }
+                      if (isInWatchlist) {
+                        await watchlistRef.delete();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${widget.show.name} removed from Watchlist',
+                            ),
+                          ),
+                        );
+                      } else {
+                        await watchlistRef.set({
+                          'title': widget.show.name,
+                          'posterPath': widget.show.posterPath,
+                          'rating': widget.show.rating,
+                          'overview': widget.show.overview,
+                          'addedAt': DateTime.now(),
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${widget.show.name} added to Watchlist',
+                            ),
+                          ),
+                        );
+                      }
 
-                  _checkWatchlist();
-                },
-                color: AppColors.darkBlue,
-                fullWidth: true,
-              ),
+                      _checkWatchlist();
+                    },
+                    color: AppColors.darkBlue,
+                    fullWidth: true,
+                  ),
 
               const SizedBox(height: 12),
               ButtonWidget(
@@ -296,23 +311,26 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                   ? const Center(child: CircularProgressIndicator())
                   : reviews.isEmpty
                   ? const Text(
-                  "No reviews yet. Go leave one!",
-                  style: TextStyle(fontSize: 16, color: Colors.black54),)
+                    "No reviews yet. Go leave one!",
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
+                  )
                   : const SizedBox(height: 10),
-              ...reviews.map((r) => Padding(
-                padding: const EdgeInsets.only(bottom: 6.0),
-                child: ReviewCard(
-                  review: Review(
-                    title: widget.show.name,
-                    posterPath: widget.show.posterPath,
-                    reviewText: r.review,
-                    rating: r.rating,
-                    username: r.username,
-                    userId: r.userId,
-                    userProfilePhoto: r.profilePic,
+              ...reviews.map(
+                (r) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6.0),
+                  child: ReviewCard(
+                    review: Review(
+                      title: widget.show.name,
+                      posterPath: widget.show.posterPath,
+                      reviewText: r.review,
+                      rating: r.rating,
+                      username: r.username,
+                      userId: r.userId,
+                      userProfilePhoto: r.profilePic,
+                    ),
+                    isMine: FirebaseAuth.instance.currentUser?.uid == r.userId,
+                    onUpdate: _loadReviews,
                   ),
-                  isMine: FirebaseAuth.instance.currentUser?.uid == r.userId,
-                  onUpdate: _loadReviews,
                 ),
               ),
             ],
