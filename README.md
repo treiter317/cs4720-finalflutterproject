@@ -3,7 +3,3 @@
 Instructions for use:
 1. Cd to .\sceneit
 2. type command: flutter run
-
-Grading note: Most of our reviews/ testing was done on breaking bad, so if you want to see reviews and send messages to other users, I would test out that show specifically.
-
-Thank you for a great semester Professor, good luck at Notre Dame! 
